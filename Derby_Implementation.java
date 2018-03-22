@@ -57,7 +57,7 @@ public class Derby_Implementation{
         System.out.println("Created Table");             
     }
 
-    public void addData(Connection conn) throws SQLException, IOException {
+    public void addData(Connection conn) throws SQLException, IOException, ParseException {
 	
 
         BufferedReader bReader = new BufferedReader(new FileReader(DATA_FILE));
@@ -84,9 +84,10 @@ public class Derby_Implementation{
                 
 
                 String input = "Thu Jun 18 20:56:02 EDT 2009";
-        Date date = parser.parse(input);
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        String formattedDate = formatter.format(date); 
+                java.util.Date utilDate1 = parser.parse(values[4]);
+                java.sql.Date sqlDate1 = new java.sql.Date(utilDate1.getTime());
+                //SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                //String formattedDate = formatter.format(date); 
                 
                 /*Date [] dates = new Date[3];
                                 
@@ -103,20 +104,18 @@ public class Derby_Implementation{
                 //java.sql.Date sqlDate = new java.sql.Date(util.Date.getTime());
                
 
-               java.sql.Date sqlDate1 = new java.sql.Date(System.currentTimeMillis());
+               //java.sql.Date sqlDate1 = new java.sql.Date(System.currentTimeMillis());
  
                //java.sql.Date sqlDate = new java.sql.Date(System.currentTimeMillis());
-
-                date1 = 
 
                 System.out.println("inserting values"); 
                 
                 //Ignore first value (which is table name) 
                 ps.setString(1, values[1]);
                 ps.setString(2, values[2]);
-                ps.setDate(3, sqlDate); 
-                ps.setDate(4, sqlDate);
-                ps.setDate(5, sqlDate);
+                ps.setDate(3, sqlDate1); 
+                ps.setDate(4, sqlDate1);
+                ps.setDate(5, sqlDate1);
                 ps.setString(6, values[6]);
                 ps.setString(7, values[7]);
                 ps.setString(8, values[8]);
