@@ -30,8 +30,6 @@ public class Derby_Implementation{
         connectionProps.put("user", "an");
         connectionProps.put("password", "pwd");    
    
-///opt/Apache/db-derby-10.14.1.0-bin/lib/derby.jar:/opt/Apache/db-derby-10.14.1.0-bin/lib/derbytools.jar
- 
         //DriverManager.registerDriver(new org.apache.derby.jbdc.ClientDriver());
         Connection conn = DriverManager.getConnection(
             "jdbc:derby:test.db;create=true", connectionProps);
@@ -52,20 +50,23 @@ public class Derby_Implementation{
         Statement s = conn.createStatement();
         String doThisSql = "CREATE TABLE busNames";
         doThisSql += "(BN_NAME VARCHAR(256), BN_STATUS VARCHAR(256), ";
-        doThisSql += "BN_REG_DT VARCHAR(256), BN_CANCEL_DT VARCHAR(256), BN_RENEW_DT VARCHAR(256), ";
+        doThisSql += "BN_REG_DT DATE, BN_CANCEL_DT DATE, BN_RENEW_DT DATE, ";
         doThisSql += "BN_STATE_NUM VARCHAR(256), BN_STATE_OF_REG VARCHAR(256), BN_ABN VARCHAR(256))";
         s.executeUpdate(doThisSql);
         System.out.println("Created Table");             
     }
 
     public void addData(Connection conn) throws SQLException, IOException {
-		
+	
+
         BufferedReader bReader = new BufferedReader(new FileReader(DATA_FILE));
         
         String line;
         
         //Ignore first line which contains headings
         bReader.readLine();
+ 
+        long startTime = System.nanoTime();
 
         while((line = bReader.readLine()) != null){
             System.out.println(line);
@@ -77,30 +78,31 @@ public class Derby_Implementation{
             try (PreparedStatement ps = conn.prepareStatement(doThisSql)) {
                 
                 //Ignore first value (which is table name) 
-		        ps.setString(1, values[1]);
-		        ps.setString(2, values[2]);
-		        ps.setString(3, values[3]);
-		        ps.setString(4, values[4]);
-		        ps.setString(5, values[5]);
-		        ps.setString(6, values[6]);
-		        ps.setString(7, values[7]);
-		        ps.setString(8, values[8]);
+		        for (int i = 1; i < 9; i++){
+                    ps.setString(i, values[i]);
+                }
                 ps.executeUpdate();
 		    }
         }
+
+        long endTime = System.nanoTime();
+        long duration = (endTime = startTime);	
+        System.out.println("Time to insert: " + duration); 
 	}
 
     public void readData(Connection conn) throws SQLException {
 		try (Statement query = conn.createStatement()) {
-			String sql = "SELECT * FROM testdata";
+			String sql = "SELECT * FROM busNames LIMIT 100";
 			query.setFetchSize(100);
 			
 			try (ResultSet rs = query.executeQuery(sql)) {
 				while (!rs.isClosed() && rs.next()) {
-					int num = rs.getInt(1);
-					Timestamp dt = rs.getTimestamp(2);
-					String txt = rs.getString(3);
-					System.out.println(num + "; " + dt + "; " + txt);
+		
+                    headings = "BN_NAME\tBN_STATUS\tBN_REG_DT\tBN_CANCEL_DT\tBN_RENEW_DT\tBN_STATE_NUM\tBN_STATE_OF_REG\tBN_ABN";
+                    rowText = rs.getString(1) + "\t" + rs.getString(2) + "\t" + str(s.getDate(3))  + "\t" + str(rs.getDate(4))  + "\t"
+                    rowText += str(rs.getDate(5))  + "\t" + rs.getString(6)  + "\t" + rs.getString(7)  + "\t" +  rs.getString(8);
+                    System.out.println(headings);
+                    System.out.println(rowText);
 				}
 			}
 			
@@ -108,10 +110,8 @@ public class Derby_Implementation{
 	}
 
 
-
-
     public static void main(String[] args){
-        System.out.println("Hello World");
+        System.out.println("Derby Implementation");
         Derby_Implementation d_imp = new Derby_Implementation();
         
         try{
@@ -123,7 +123,7 @@ public class Derby_Implementation{
 
         } 
         catch(Exception e){
-            System.out.println(e.toString());
+            System.err.println(e.toString());//Needs to print to standard err
         }
         
     }
