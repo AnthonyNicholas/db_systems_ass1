@@ -18,13 +18,11 @@ public class Derby_Implementation{
     private static final String DB_USER = "dbUser";
     private static final String DB_PASSWORD = "dbPwd";
     private static final String DB_PROPERTIES = "db.properties";    
-    private static final String DATA_FILE = "BUSINESS_NAMES_201803.csv";
+    private static final String DATA_FILE = "BUSINESS_NAMES_short_version.csv";
 
-    
-    public void writeProperties() throws IOException{
-        //Properties prop = new Properties();
-        //prop.setProperty();	
-    }
+/* 
+* Function establishes connection with database
+*/
 
     public Connection connectToDB() throws SQLException {
         Properties connectionProps = new Properties();
@@ -40,12 +38,22 @@ public class Derby_Implementation{
         return conn;
     }
 
+
+/* 
+* Function drops database table
+*/
+
     public void dropDatabaseTable(Connection conn) throws SQLException, IOException {
         Statement s = conn.createStatement();
         String doThisSql = "DROP TABLE busNames";
         s.executeUpdate(doThisSql);
         System.out.println("Dropped Table");             
     }
+
+
+/* 
+* Function creates database table
+*/
 
     public void createDatabaseTable(Connection conn) throws SQLException, IOException {
         Statement s = conn.createStatement();
@@ -57,65 +65,55 @@ public class Derby_Implementation{
         System.out.println("Created Table");             
     }
 
+
+/* 
+* Function inserts data into database, timing insert operations and printing result to consoles
+*/
+
     public void addData(Connection conn) throws SQLException, IOException, ParseException {
-	
 
         BufferedReader bReader = new BufferedReader(new FileReader(DATA_FILE));
         String line;
-        
+        SimpleDateFormat parser = new SimpleDateFormat("dd/mm/yyyy");
+        java.sql.Date dates[] = new java.sql.Date[3];
+        java.util.Date utilDate; 
+
         //Ignore first line which contains headings
         bReader.readLine();
- 
-        long startTime = System.nanoTime();
+        
+        long startTime = System.currentTimeMillis();
 
         while((line = bReader.readLine()) != null){
-            //System.out.println(line);
+            
             String values[] = line.split("\t");
             
-            if (values.length != 9){
+            if (values.length != 9){ //If line does not contain full set of values, ignore
                     continue;
             }
-
-            SimpleDateFormat parser = new SimpleDateFormat("dd/MMM/yyyy");
-
+            
             String doThisSql = "INSERT INTO busNames VALUES (?,?,?,?,?,?,?,?)";
 		
             try (PreparedStatement ps = conn.prepareStatement(doThisSql)) {
                 
-
-                String input = "Thu Jun 18 20:56:02 EDT 2009";
-                java.util.Date utilDate1 = parser.parse(values[4]);
-                java.sql.Date sqlDate1 = new java.sql.Date(utilDate1.getTime());
-                //SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-                //String formattedDate = formatter.format(date); 
-                
-                /*Date [] dates = new Date[3];
-                                
+                // First prepare the date values for insertion - they need to be in java.sql.Date format
                 for (int i = 0; i < 3; i++){
-                    int year = Integer.parseInt(values[i+4].split("/")[2]);
-                    int month =  Integer.parseInt(values[i+4].split("/")[1]);
-                    int day =  Integer.parseInt(values[i+4].split("/")[0]);
-     
-                    dates[i] = new Date(year, month, day);
-                    System.out.println(dates[i]);
+                    try{
+                        utilDate = parser.parse(values[i+4]);
+                    } catch(ParseException e){
+                        utilDate = parser.parse("01/01/1900"); //If cannot parse date, insert dummy value   
+                    }
+                    dates[i] = new java.sql.Date(utilDate.getTime());
                 }
-                */
              
-                //java.sql.Date sqlDate = new java.sql.Date(util.Date.getTime());
-               
-
-               //java.sql.Date sqlDate1 = new java.sql.Date(System.currentTimeMillis());
- 
-               //java.sql.Date sqlDate = new java.sql.Date(System.currentTimeMillis());
-
-                System.out.println("inserting values"); 
+                System.out.print("."); 
                 
-                //Ignore first value (which is table name) 
+
+                // Ignore first value (table name) and insert all other values
                 ps.setString(1, values[1]);
                 ps.setString(2, values[2]);
-                ps.setDate(3, sqlDate1); 
-                ps.setDate(4, sqlDate1);
-                ps.setDate(5, sqlDate1);
+                ps.setDate(3, dates[0]); 
+                ps.setDate(4, dates[1]);
+                ps.setDate(5, dates[2]);
                 ps.setString(6, values[6]);
                 ps.setString(7, values[7]);
                 ps.setString(8, values[8]);
@@ -123,40 +121,28 @@ public class Derby_Implementation{
 		    }
         }
 
-        long endTime = System.nanoTime();
-        long duration = (endTime = startTime);	
-        System.out.println("Time to insert: " + duration); 
+        bReader.close();
+
+        long endTime = System.currentTimeMillis();
+        long duration = (endTime - startTime);	
+        System.out.println("Time to insert: " + duration + " milliseconds"); 
 	}
+
+/* 
+* Function prints business names for first 5 rows of data 
+*/
 
     public void readData(Connection conn) throws SQLException {
 		try (Statement query = conn.createStatement()) {
-			String sql = "SELECT * FROM busNames LIMIT 100";
-			query.setFetchSize(100);
+			String sql = "SELECT * FROM busNames FETCH FIRST 5 ROWS ONLY";
+			//query.setFetchSize(100);
 			
 			try (ResultSet rs = query.executeQuery(sql)) {
 				while (!rs.isClosed() && rs.next()) {
 	                
                     System.out.println(rs.getString(1));
-                    /*
-                    String name, status, reg_dt, cancel_dt, renew_dt, state_num, state_of_reg, abn 
-                    name = status = reg_dt = cancel_dt = renew_dt = state_num = state_of_reg = abn = null 
-                    
-                    name = 
-                    status = 
-                    reg_dt =
-                    cancel_dt = 
-                    renew_dt = 
-                    state_num = 
-                    state_of_reg = 
-                    abn = null 
-	
-                    String headings = "BN_NAME\tBN_STATUS\tBN_REG_DT\tBN_CANCEL_DT\tBN_RENEW_DT\tBN_STATE_NUM\tBN_STATE_OF_REG\tBN_ABN";
-                    String rowText = rs.getString(1) + "\t" + rs.getString(2) + "\t" + rs.getDate(3)  + "\t" + rs.getDate(4)  + "\t";
-                    rowText += rs.getDate(5)  + "\t" + rs.getString(6)  + "\t" + rs.getString(7)  + "\t" +  rs.getString(8);
-                    System.out.println(headings);
-                    System.out.println(rowText);
-			        */
-            	}
+            
+                    }
 			}
 			
 		}
