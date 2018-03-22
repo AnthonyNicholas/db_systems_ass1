@@ -10,6 +10,7 @@
 import java.io.*;
 import java.sql.*;
 import java.util.*;
+import java.text.*;
 
 public class Derby_Implementation{
 
@@ -60,7 +61,6 @@ public class Derby_Implementation{
 	
 
         BufferedReader bReader = new BufferedReader(new FileReader(DATA_FILE));
-        
         String line;
         
         //Ignore first line which contains headings
@@ -69,18 +69,57 @@ public class Derby_Implementation{
         long startTime = System.nanoTime();
 
         while((line = bReader.readLine()) != null){
-            System.out.println(line);
+            //System.out.println(line);
             String values[] = line.split("\t");
-            System.out.println(values.toString());           
- 
+            
+            if (values.length != 9){
+                    continue;
+            }
+
+            SimpleDateFormat parser = new SimpleDateFormat("dd/MMM/yyyy");
+
             String doThisSql = "INSERT INTO busNames VALUES (?,?,?,?,?,?,?,?)";
 		
             try (PreparedStatement ps = conn.prepareStatement(doThisSql)) {
                 
-                //Ignore first value (which is table name) 
-		        for (int i = 1; i < 9; i++){
-                    ps.setString(i, values[i]);
+
+                String input = "Thu Jun 18 20:56:02 EDT 2009";
+        Date date = parser.parse(input);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = formatter.format(date); 
+                
+                /*Date [] dates = new Date[3];
+                                
+                for (int i = 0; i < 3; i++){
+                    int year = Integer.parseInt(values[i+4].split("/")[2]);
+                    int month =  Integer.parseInt(values[i+4].split("/")[1]);
+                    int day =  Integer.parseInt(values[i+4].split("/")[0]);
+     
+                    dates[i] = new Date(year, month, day);
+                    System.out.println(dates[i]);
                 }
+                */
+             
+                //java.sql.Date sqlDate = new java.sql.Date(util.Date.getTime());
+               
+
+               java.sql.Date sqlDate1 = new java.sql.Date(System.currentTimeMillis());
+ 
+               //java.sql.Date sqlDate = new java.sql.Date(System.currentTimeMillis());
+
+                date1 = 
+
+                System.out.println("inserting values"); 
+                
+                //Ignore first value (which is table name) 
+                ps.setString(1, values[1]);
+                ps.setString(2, values[2]);
+                ps.setDate(3, sqlDate); 
+                ps.setDate(4, sqlDate);
+                ps.setDate(5, sqlDate);
+                ps.setString(6, values[6]);
+                ps.setString(7, values[7]);
+                ps.setString(8, values[8]);
                 ps.executeUpdate();
 		    }
         }
@@ -97,13 +136,28 @@ public class Derby_Implementation{
 			
 			try (ResultSet rs = query.executeQuery(sql)) {
 				while (!rs.isClosed() && rs.next()) {
-		
-                    headings = "BN_NAME\tBN_STATUS\tBN_REG_DT\tBN_CANCEL_DT\tBN_RENEW_DT\tBN_STATE_NUM\tBN_STATE_OF_REG\tBN_ABN";
-                    rowText = rs.getString(1) + "\t" + rs.getString(2) + "\t" + str(s.getDate(3))  + "\t" + str(rs.getDate(4))  + "\t"
-                    rowText += str(rs.getDate(5))  + "\t" + rs.getString(6)  + "\t" + rs.getString(7)  + "\t" +  rs.getString(8);
+	                
+                    System.out.println(rs.getString(1));
+                    /*
+                    String name, status, reg_dt, cancel_dt, renew_dt, state_num, state_of_reg, abn 
+                    name = status = reg_dt = cancel_dt = renew_dt = state_num = state_of_reg = abn = null 
+                    
+                    name = 
+                    status = 
+                    reg_dt =
+                    cancel_dt = 
+                    renew_dt = 
+                    state_num = 
+                    state_of_reg = 
+                    abn = null 
+	
+                    String headings = "BN_NAME\tBN_STATUS\tBN_REG_DT\tBN_CANCEL_DT\tBN_RENEW_DT\tBN_STATE_NUM\tBN_STATE_OF_REG\tBN_ABN";
+                    String rowText = rs.getString(1) + "\t" + rs.getString(2) + "\t" + rs.getDate(3)  + "\t" + rs.getDate(4)  + "\t";
+                    rowText += rs.getDate(5)  + "\t" + rs.getString(6)  + "\t" + rs.getString(7)  + "\t" +  rs.getString(8);
                     System.out.println(headings);
                     System.out.println(rowText);
-				}
+			        */
+            	}
 			}
 			
 		}
