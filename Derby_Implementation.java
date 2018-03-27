@@ -11,6 +11,7 @@ import java.io.*;
 import java.sql.*;
 import java.util.*;
 import java.text.*;
+import java.lang.Integer.*;
 
 public class Derby_Implementation{
 
@@ -18,7 +19,9 @@ public class Derby_Implementation{
     private static final String DB_USER = "dbUser";
     private static final String DB_PASSWORD = "dbPwd";
     private static final String DB_PROPERTIES = "db.properties";    
-    private static final String DATA_FILE = "BUSINESS_NAMES_short_version.csv";
+
+    private static final String DATA_FILE = "BUSINESS_NAMES_201803.csv";
+//    private static final String DATA_FILE = "BUSINESS_NAMES_short_version.csv";
 
 /* 
 * Function establishes connection with database
@@ -44,25 +47,127 @@ public class Derby_Implementation{
 */
 
     public void dropDatabaseTable(Connection conn) throws SQLException, IOException {
+
+        String [] tableNames = {"busNames", "bulkImport", "states", "registered"};
+
         Statement s = conn.createStatement();
-        String doThisSql = "DROP TABLE busNames";
-        s.executeUpdate(doThisSql);
-        System.out.println("Dropped Table");             
-    }
+
+        for (String name:tableNames){
+            s.executeUpdate("DROP TABLE " + name);
+ 
+        }
+
+        System.out.println("Dropped Tables");             
+
+   }
 
 
 /* 
-* Function creates database table
+* Function creates four database tables we will need - bulk import, busNames, states and registered tables 
+* Populates codes for STATE_CODE and REG_CODE
 */
 
     public void createDatabaseTable(Connection conn) throws SQLException, IOException {
         Statement s = conn.createStatement();
-        String doThisSql = "CREATE TABLE busNames";
-        doThisSql += "(BN_NAME VARCHAR(256), BN_STATUS VARCHAR(256), ";
+        String doThisSql = "CREATE TABLE bulkImport";
+        
+        doThisSql += "(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), ";
+        doThisSql += "BN_NAME VARCHAR(256), BN_STATUS VARCHAR(15), ";
         doThisSql += "BN_REG_DT DATE, BN_CANCEL_DT DATE, BN_RENEW_DT DATE, ";
-        doThisSql += "BN_STATE_NUM VARCHAR(256), BN_STATE_OF_REG VARCHAR(256), BN_ABN VARCHAR(256))";
+        doThisSql += "BN_STATE_NUM VARCHAR(15), BN_STATE_OF_REG VARCHAR(15), BN_ABN VARCHAR(15), ";
+        doThisSql += "PRIMARY KEY(ID))";
         s.executeUpdate(doThisSql);
-        System.out.println("Created Table");             
+
+        Statement s2 = conn.createStatement();
+        String doThisSql2 = "CREATE TABLE busNames";
+        doThisSql2 += "(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), ";
+        doThisSql2 += "BN_NAME VARCHAR(256), REG_CODE INT, ";
+        doThisSql2 += "BN_REG_DT DATE, BN_CANCEL_DT DATE, BN_RENEW_DT DATE, ";
+        doThisSql2 += "BN_STATE_NUM VARCHAR(15), STATE_CODE INT, BN_ABN VARCHAR(15), ";
+        doThisSql2 += "PRIMARY KEY(ID))";
+        s2.executeUpdate(doThisSql2);
+        
+        Statement s3 = conn.createStatement();
+        String doThisSql3 = "CREATE TABLE states";
+        doThisSql3 += "(STATE_CODE INT, STATE_NAME VARCHAR(4), "; 
+        doThisSql3 += "PRIMARY KEY(STATE_CODE))";
+        s3.executeUpdate(doThisSql3);
+        
+        Statement s6 = conn.createStatement();
+        String doThisSql6 = "INSERT INTO states VALUES";
+        doThisSql6 += "(1, 'VIC'), (2, 'NSW'), (3, 'ACT'), (4, 'QLD'), (5, 'NT'), (6, 'SA'), (7, 'WA'), (8, 'TAS'), (9, 'NULL')";
+        s6.executeUpdate(doThisSql6);
+ 
+        Statement s4 = conn.createStatement();
+        String doThisSql4 = "CREATE TABLE registered";
+        doThisSql4 += "(REG_CODE INT, REG_TEXT VARCHAR(15), "; 
+        doThisSql4 += "PRIMARY KEY(REG_CODE))";
+        s4.executeUpdate(doThisSql4);
+
+        Statement s5 = conn.createStatement();
+        String doThisSql5 = "INSERT INTO registered VALUES";
+        doThisSql5 += "(1, 'Deregistered'), (2, 'Registered')";
+        s5.executeUpdate(doThisSql5);
+        
+        System.out.println("Created Tables");             
+    }
+
+
+
+/* 
+* Function inserts data into database, timing insert operations and printing result to consoles
+*/
+
+    public void improveStructure(Connection conn) throws SQLException, IOException, ParseException {
+/*
+        Statement s = conn.createStatement();
+        String doThisSql = "ALTER TABLE bulkImport ADD STATE_CODE INT";
+        s.executeUpdate(doThisSql);
+
+        Statement s2 = conn.createStatement();
+        String doThisSql2 = "ALTER TABLE bulkImport ADD REG_CODE INT";
+        s2.executeUpdate(doThisSql2);
+        System.out.println("added additional columns");
+*/
+        Statement s3 = conn.createStatement();
+        String doThisSql3 = "UPDATE bulkImport ";
+        doThisSql3 += "SET REG_CODE = 1 "; 
+        doThisSql3 += "WHERE BN_STATUS LIKE 'Deregistered'";
+        s3.executeUpdate(doThisSql3);
+
+        Statement s4 = conn.createStatement();
+        String doThisSql4 = "UPDATE bulkImport ";
+        doThisSql4 += "SET REG_CODE = 2 "; 
+        doThisSql4 += "WHERE BN_STATUS LIKE 'Registered'";
+        s3.executeUpdate(doThisSql4);
+
+        System.out.println("Updated Reg Code");
+
+        String [] doThisSql5 = new String [9];
+
+        String [] states = {"VIC", "NSW", "ACT", "QLD", "NT", "SA", "WA", "TAS", ""};
+        
+        for (int i = 0; i < 9; i++){
+
+            doThisSql5[i] = "UPDATE bulkImport ";
+            doThisSql5[i] += "SET STATE_CODE = " + i + " "; 
+            doThisSql5[i] += "WHERE BN_STATE_OF_REG LIKE '%" + states[i] + "%'";
+            conn.createStatement().executeUpdate(doThisSql5[i]);
+        }
+ 
+        System.out.println("Updated State Code");
+
+        Statement s6 = conn.createStatement();
+        String doThisSql6 = "ALTER TABLE bulkImport ";
+        doThisSql6 += "DROP BN_STATUS"; 
+        s6.executeUpdate(doThisSql6);
+
+
+        Statement s7 = conn.createStatement();
+        String doThisSql7 = "ALTER TABLE bulkImport ";
+        doThisSql7 += "DROP BN_STATE_OF_REG"; 
+        s7.executeUpdate(doThisSql7);
+
     }
 
 
@@ -81,7 +186,6 @@ public class Derby_Implementation{
         //Ignore first line which contains headings
         bReader.readLine();
         
-        long startTime = System.currentTimeMillis();
 
         while((line = bReader.readLine()) != null){
             
@@ -91,8 +195,10 @@ public class Derby_Implementation{
                     continue;
             }
             
-            String doThisSql = "INSERT INTO busNames VALUES (?,?,?,?,?,?,?,?)";
-		
+            String doThisSql = "INSERT INTO bulkImport (BN_NAME, BN_STATUS, BN_REG_DT, BN_CANCEL_DT, BN_RENEW_DT, BN_STATE_NUM, BN_STATE_OF_REG, BN_ABN) ";
+            doThisSql += "VALUES (?,?,?,?,?,?,?,?)";
+
+	
             try (PreparedStatement ps = conn.prepareStatement(doThisSql)) {
                 
                 // First prepare the date values for insertion - they need to be in java.sql.Date format
@@ -106,8 +212,7 @@ public class Derby_Implementation{
                 }
              
                 System.out.print("."); 
-                
-
+               
                 // Ignore first value (table name) and insert all other values
                 ps.setString(1, values[1]);
                 ps.setString(2, values[2]);
@@ -117,24 +222,22 @@ public class Derby_Implementation{
                 ps.setString(6, values[6]);
                 ps.setString(7, values[7]);
                 ps.setString(8, values[8]);
+
                 ps.executeUpdate();
 		    }
         }
 
         bReader.close();
 
-        long endTime = System.currentTimeMillis();
-        long duration = (endTime - startTime);	
-        System.out.println("Time to insert: " + duration + " milliseconds"); 
-	}
+}
 
 /* 
-* Function prints business names for first 5 rows of data 
+* Function prints business names for first 10 rows of data 
 */
 
     public void readData(Connection conn) throws SQLException {
 		try (Statement query = conn.createStatement()) {
-			String sql = "SELECT * FROM busNames FETCH FIRST 5 ROWS ONLY";
+			String sql = "SELECT * FROM bulkImport FETCH FIRST 10 ROWS ONLY";
 			//query.setFetchSize(100);
 			
 			try (ResultSet rs = query.executeQuery(sql)) {
@@ -148,6 +251,9 @@ public class Derby_Implementation{
 		}
 	}
 
+/* 
+* Main - Establishes connection, drops any existing tables in db, calls functions to create db structure, add data (timing this step), improve structure of db and then print results (first 10 rows only).
+*/
 
     public static void main(String[] args){
         System.out.println("Derby Implementation");
@@ -155,10 +261,23 @@ public class Derby_Implementation{
         
         try{
             Connection conn = d_imp.connectToDB();
+
             d_imp.dropDatabaseTable(conn);
             d_imp.createDatabaseTable(conn);
+            
+            long startTime = System.currentTimeMillis();
+            
             d_imp.addData(conn);
+
+            long endTime = System.currentTimeMillis();
+            long duration = (endTime - startTime);	
+            
+            System.out.println("Time to insert: " + duration + " milliseconds"); 
+
+            d_imp.improveStructure(conn);
+	
             d_imp.readData(conn);
+            
 
         } 
         catch(Exception e){
