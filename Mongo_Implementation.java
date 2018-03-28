@@ -114,11 +114,12 @@ public class Mongo_Implementation{
         Mongo_Implementation m_imp = new Mongo_Implementation(); //Establishes connection to db
         
         try{
+            m_imp.dropCollection();
 
             long startTime = System.currentTimeMillis(); 
             
             m_imp.addData();
-           m_imp.improveCollectionStructure(); 
+            m_imp.improveCollectionStructure(); 
 
             long endTime = System.currentTimeMillis();
             long duration = (endTime - startTime);

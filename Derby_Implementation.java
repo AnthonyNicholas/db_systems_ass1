@@ -119,7 +119,7 @@ public class Derby_Implementation{
 */
 
     public void improveStructure(Connection conn) throws SQLException, IOException, ParseException {
-/*
+
         Statement s = conn.createStatement();
         String doThisSql = "ALTER TABLE bulkImport ADD STATE_CODE INT";
         s.executeUpdate(doThisSql);
@@ -128,7 +128,7 @@ public class Derby_Implementation{
         String doThisSql2 = "ALTER TABLE bulkImport ADD REG_CODE INT";
         s2.executeUpdate(doThisSql2);
         System.out.println("added additional columns");
-*/
+
         Statement s3 = conn.createStatement();
         String doThisSql3 = "UPDATE bulkImport ";
         doThisSql3 += "SET REG_CODE = 1 "; 
@@ -179,7 +179,7 @@ public class Derby_Implementation{
 
         BufferedReader bReader = new BufferedReader(new FileReader(DATA_FILE));
         String line;
-        SimpleDateFormat parser = new SimpleDateFormat("dd/mm/yyyy");
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
         java.sql.Date dates[] = new java.sql.Date[3];
         java.util.Date utilDate; 
 
@@ -204,7 +204,8 @@ public class Derby_Implementation{
                 // First prepare the date values for insertion - they need to be in java.sql.Date format
                 for (int i = 0; i < 3; i++){
                     try{
-                        utilDate = parser.parse(values[i+4]);
+                        utilDate = parser.parse(values[i+3]);
+                        
                     } catch(ParseException e){
                         utilDate = parser.parse("01/01/1900"); //If cannot parse date, insert dummy value   
                     }
@@ -242,10 +243,15 @@ public class Derby_Implementation{
 			
 			try (ResultSet rs = query.executeQuery(sql)) {
 				while (!rs.isClosed() && rs.next()) {
-	                
-                    System.out.println(rs.getString(1));
-            
+	               
+                    int colNum = rs.getMetaData().getColumnCount();
+                    
+                    for (int i = 1; i <= colNum; i++){
+ 
+                        System.out.print(rs.getString(i)+ "\t");
                     }
+                    System.out.println();        
+                }
 			}
 			
 		}
