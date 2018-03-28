@@ -90,15 +90,21 @@ public class Dbload{
     private static final String DATA_FILE = "BUSINESS_NAMES_short_version.csv";
     private byte[] buffer;
     int bytes_in_buffer;
- 
+    DataOutputStream os;
+    ByteArrayOutputStream byte_os;
+
     /*   
     * Constructor 
     */
 
     public Dbload(String[] args){
         this.handleArguments(args);
-        this.buffer = new byte[this.pagesize];
-        this.bytes_in_buffer = 0;
+        try{
+            this.os = new DataOutputStream(new FileOutputStream(this.output_file_name));
+            this.byte_os = new ByteArrayOutputStream(this.pagesize);
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }   
     
     /*   
@@ -140,31 +146,42 @@ public class Dbload{
                 //Record is defined is seperate class; has properties name, status, reg_dt, canc_dt, renew_dt, state_num, state & abn              
                 Record r = new Record(values); 
                 r.print();
-                writeRecord(r);
-               
+                
+                if (this.byte_os.size() + r.byteLength < this.pagesize){
+                    this.byte_os.write(r.getByteArray());
+                }
+                else{
+                    System.out.println("Next page");
+                    this.byte_os.writeTo(this.os);
+                    this.byte_os.reset();
+                    this.byte_os.write(r.getByteArray());
+                }
+
+                //convert record to binary format & add to buffer
+ /*
+                try (InputStream fis = new FileInputStream(path.toFile());
+                InputStream bis = new BufferedInputStream(fis)) {
+                    byte[] buffer = new byte[4096];
+                    int n;
+                    while ((n = bis.read(buffer)) >= 0) {
+                        os.write(buffer, 0, n);
+                    }
+                }             
+*/
             }
         } catch (Exception e){
             System.out.println(e.getMessage());
         }
     }
 
-    private void writeRecord(Record r){
-
-        //I would like to keep adding the records to a byte array, and then write the array when full
-        
-        int new_size = this.bytes_in_buffer + bytes_to_add;
-        if (new_size < this.pagesize){
-            this.buffer
-        }
+    private void writeBuffer(byte[] buffer){
         try{
-            DataOutputStream os = new DataOutputStream(new FileOutputStream(this.output_file_name));
-            os.writeUTF(r.name);
-            os.close();
+            os.write(buffer);
         } catch (Exception e){
             System.out.println(e.getMessage());
         }
     }
-    
+   /* 
     public void readFileToOutputStream(Path path, OutputStream os) throws IOException {
         try (InputStream fis = new FileInputStream(path.toFile());
         InputStream bis = new BufferedInputStream(fis)) {
@@ -175,7 +192,7 @@ public class Dbload{
             }
         }
     }
-
+*/
 
     public static void main(String[] args){
         
