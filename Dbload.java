@@ -84,33 +84,36 @@ import java.lang.*;
 
 public class Dbload{
 
-    private RandomAccessFile file; //The database file
+//    private RandomAccessFile file; //The database file
     private int pagesize;
-    private String name; 
+    private String output_file_name; 
     private static final String DATA_FILE = "BUSINESS_NAMES_short_version.csv";
-
+    private byte[] buffer;
+    int bytes_in_buffer;
  
     /*   
     * Constructor 
     */
 
-    public Dbload(){
-
+    public Dbload(String[] args){
+        this.handleArguments(args);
+        this.buffer = new byte[this.pagesize];
+        this.bytes_in_buffer = 0;
     }   
     
     /*   
     * Function handles command line arguments (pagesize and name) 
     */
 
-    private void handleArguments(String args[]){
+    private void handleArguments(String[] args){
         if (args[0].equals("-p")){
             System.out.println("-p came first");
             this.pagesize = Integer.parseInt(args[1]);
-            this.name = args[2];
+            this.output_file_name = args[2];
         } else {
             
             System.out.println("-p came second");
-            this.name = args[0];
+            this.output_file_name = args[0];
             this.pagesize = Integer.parseInt(args[2]);
         }
     }
@@ -123,8 +126,6 @@ public class Dbload{
 
         String line;
 
-        String BN_NAME, BN_STATUS, BN_REG_DT, BN_CANCEL_DT, BN_RENEW_DT, BN_STATE_NUM, BN_STATE_OF_REG, BN_ABN;
-
         try{
 
             BufferedReader bReader = new BufferedReader(new FileReader(DATA_FILE));
@@ -134,40 +135,56 @@ public class Dbload{
 
             while((line = bReader.readLine()) != null){
 
-                String values[] = line.split("\t");
+                String[] values = line.split("\t");
                 
-                for (String val:values){
-                    System.out.print(val + '\t');
-                }
-                System.out.println();
-
-                if (values.length != 9){ //If line does not contain full set of values, ignore
-                    continue;
-                }
-                
-                //Ignore values[0] - redundant information
-                BN_NAME = values[1]; 
-                BN_STATUS =  values[2]; //String 15 char max
-                BN_REG_DT = values[3];
-                BN_CANCEL_DT = values[4];
-                BN_RENEW_DT = values[5];
-                BN_STATE_NUM = values[6];
-                BN_STATE_OF_REG = values[7]; //String 3 char max
-                BN_ABN = values[8]; //Int??
-
-
+                //Record is defined is seperate class; has properties name, status, reg_dt, canc_dt, renew_dt, state_num, state & abn              
+                Record r = new Record(values); 
+                r.print();
+                writeRecord(r);
+               
             }
         } catch (Exception e){
             System.out.println(e.getMessage());
         }
     }
 
+    private void writeRecord(Record r){
+
+        //I would like to keep adding the records to a byte array, and then write the array when full
+        
+        int new_size = this.bytes_in_buffer + bytes_to_add;
+        if (new_size < this.pagesize){
+            this.buffer
+        }
+        try{
+            DataOutputStream os = new DataOutputStream(new FileOutputStream(this.output_file_name));
+            os.writeUTF(r.name);
+            os.close();
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+    
+    public void readFileToOutputStream(Path path, OutputStream os) throws IOException {
+        try (InputStream fis = new FileInputStream(path.toFile());
+        InputStream bis = new BufferedInputStream(fis)) {
+            byte[] buffer = new byte[4096];
+            int n;
+            while ((n = bis.read(buffer)) >= 0) {
+                os.write(buffer, 0, n);
+            }
+        }
+    }
+
 
     public static void main(String[] args){
-    
-        Dbload db = new Dbload();
-        db.handleArguments(args);
-        db.readFile(); 
+        
+       // String[] values = {"a", "b", "c", "d", "e", "f", "g", "h", "i"};
+
+       // Record r = new Record(values);                
+ 
+        Dbload db = new Dbload(args);
+        db.readFile();
 
     }   
 
