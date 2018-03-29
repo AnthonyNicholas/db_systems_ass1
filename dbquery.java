@@ -13,13 +13,14 @@
  * there may be multiple answers. Then read in the next page of records from the file. The process should continue until there are no 
  * more records in the file to process.
  *
- * In addition, the program must always output the total time taken to do all the search opera- tions in milliseconds to stdout.
+ * In addition, the program must always output the total time taken to do all the search operations in milliseconds to stdout.
  *
 */
 
 import java.io.*;
 import java.util.*;
 import java.lang.*;
+import java.lang.Math.*;
 
 public class dbquery{
 
@@ -47,7 +48,7 @@ public class dbquery{
             this.search_bytes = this.search_text.getBytes();
 
        } catch (Exception e){
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
         }
     }   
     
@@ -69,24 +70,31 @@ public class dbquery{
             
             while(in.read(buf) != -1){ //in.read(buf) returns -1 if it hits the EOF. 
                 //search in buf
-                
                 foundIndex = indexOf(buf, search_bytes, 0);
+                
                 while(foundIndex != -1){
-                    //System.out.println("found match at index: " + foundIndex);
                     nextDelimIndex = findNextDelimiter(foundIndex, buf);
                     lastDelimIndex = findLastDelimiter(foundIndex, buf);
-                    match_bytes = Arrays.copyOfRange(buf, lastDelimIndex, nextDelimIndex); 
+                    if ((nextDelimIndex - lastDelimIndex) < 1){ 
+                        break;
+                    }
+                    match_bytes = Arrays.copyOfRange(buf, lastDelimIndex + 1, nextDelimIndex); 
                     match_string = new String(match_bytes);
-                    System.out.println(match_string);    
+                    String [] values = match_string.split("#");
+                    System.out.format("%-40s", values[0]);
+                    for (int i = 1; i < values.length; i++){
+                        System.out.print(values[i] + "\t");
+                    } 
+                    System.out.println();
                     this.matchNum += 1;
-                    foundIndex = indexOf(buf, search_bytes, foundIndex + 1);
+                    foundIndex = indexOf(buf, search_bytes, foundIndex + 1); //keep searching from next byte
                 }      
                 //keep count of number of pages
                 //System.out.println(buf.length);
                 this.pageNum += 1;
             }
         } catch (Exception e){
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
         }
     }
 
@@ -110,21 +118,24 @@ public class dbquery{
     }  
 
     public int findNextDelimiter(int matchPosition, byte[] buf){
-    
         byte[] arr = Arrays.copyOfRange(buf, matchPosition, buf.length);        
         return matchPosition + this.indexOf(arr, "|".getBytes(), 0);
     }
 
     public int findLastDelimiter(int matchPosition, byte[] buf){
     
-        byte[] arr = Arrays.copyOfRange(buf, matchPosition - 50, matchPosition);        
-        return matchPosition - 50 + this.indexOf(arr, "|".getBytes(), 0);
+        int startPosition = Math.max(0, matchPosition - 50);
+        byte[] arr = Arrays.copyOfRange(buf, startPosition, matchPosition);        
+        
+        return startPosition + this.indexOf(arr, "|".getBytes(), 0);
     }
 
 
 
 
-
+/*
+ * Main function - searches heapfile for given string and prints matches
+ */
 
 
     public static void main(String[] args){
@@ -144,8 +155,6 @@ public class dbquery{
 
     }  
 
-    //Your dbload program must also output the following to stdout, the number of records
-    //loaded, number of pages used and the number of milliseconds to create the heap file.
  
 
 }

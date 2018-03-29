@@ -8,7 +8,7 @@ import java.io.*;
     public class Record{
     
         String name, status, reg_dt, canc_dt, renew_dt, state_num, state, abn;
-        byte [] b_name, b_status, b_reg_dt, b_canc_dt, b_renew_dt, b_state_num, b_state, b_abn, delimiter; 
+        byte [] b_name, b_status, b_reg_dt, b_canc_dt, b_renew_dt, b_state_num, b_state, b_abn, field_delimiter, record_delimiter; 
         int byteLength;
 
         public Record(String[] args){
@@ -31,7 +31,8 @@ import java.io.*;
             this.b_state_num = state_num.getBytes();
             this.b_state = state.getBytes();
             this.b_abn = abn.getBytes();
-            this.delimiter = "|".getBytes();         
+            this.record_delimiter = "|".getBytes();         
+            this.field_delimiter = "#".getBytes();         
             //calculate bytelength
             this.byteLength = this.getByteArray().length;
        }   
@@ -52,14 +53,21 @@ import java.io.*;
                     
                 //o = new ByteArrayOutputStream();
                 o.write(this.b_name);
+                o.write(this.field_delimiter);
                 o.write(this.b_status);
+                o.write(this.field_delimiter);
                 o.write(this.b_reg_dt);
+                o.write(this.field_delimiter);
                 o.write(this.b_canc_dt);
+                o.write(this.field_delimiter);
                 o.write(this.b_renew_dt);
+                o.write(this.field_delimiter);
                 o.write(this.b_state_num);
+                o.write(this.field_delimiter);
                 o.write(this.b_state);
+                o.write(this.field_delimiter);
                 o.write(this.b_abn);
-                o.write(this.delimiter);
+                o.write(this.record_delimiter);
  
             } catch(Exception e){
                 System.out.println(e.getMessage());
