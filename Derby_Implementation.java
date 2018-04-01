@@ -48,7 +48,7 @@ public class Derby_Implementation{
 
     public void dropDatabaseTable(Connection conn) throws SQLException, IOException {
 
-        String [] tableNames = {"busNames", "bulkImport", "states", "registered"};
+        String [] tableNames = {"busNames", "states", "registered"};
 
         Statement s = conn.createStatement();
 
@@ -63,13 +63,13 @@ public class Derby_Implementation{
 
 
 /* 
-* Function creates four database tables we will need - bulk import, busNames, states and registered tables 
+* Function creates four database tables we will need - busNames, states and registered tables 
 * Populates codes for STATE_CODE and REG_CODE
 */
 
     public void createDatabaseTable(Connection conn) throws SQLException, IOException {
         Statement s = conn.createStatement();
-        String doThisSql = "CREATE TABLE bulkImport";
+        String doThisSql = "CREATE TABLE busNames";
         
         doThisSql += "(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), ";
         doThisSql += "BN_NAME VARCHAR(256), BN_STATUS VARCHAR(15), ";
@@ -78,15 +78,6 @@ public class Derby_Implementation{
         doThisSql += "PRIMARY KEY(ID))";
         s.executeUpdate(doThisSql);
 
-        Statement s2 = conn.createStatement();
-        String doThisSql2 = "CREATE TABLE busNames";
-        doThisSql2 += "(ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), ";
-        doThisSql2 += "BN_NAME VARCHAR(256), REG_CODE INT, ";
-        doThisSql2 += "BN_REG_DT DATE, BN_CANCEL_DT DATE, BN_RENEW_DT DATE, ";
-        doThisSql2 += "BN_STATE_NUM VARCHAR(15), STATE_CODE INT, BN_ABN VARCHAR(15), ";
-        doThisSql2 += "PRIMARY KEY(ID))";
-        s2.executeUpdate(doThisSql2);
-        
         Statement s3 = conn.createStatement();
         String doThisSql3 = "CREATE TABLE states";
         doThisSql3 += "(STATE_CODE INT, STATE_NAME VARCHAR(4), "; 
@@ -121,22 +112,22 @@ public class Derby_Implementation{
     public void improveStructure(Connection conn) throws SQLException, IOException, ParseException {
 
         Statement s = conn.createStatement();
-        String doThisSql = "ALTER TABLE bulkImport ADD STATE_CODE INT";
+        String doThisSql = "ALTER TABLE busNames ADD STATE_CODE INT";
         s.executeUpdate(doThisSql);
 
         Statement s2 = conn.createStatement();
-        String doThisSql2 = "ALTER TABLE bulkImport ADD REG_CODE INT";
+        String doThisSql2 = "ALTER TABLE busNames ADD REG_CODE INT";
         s2.executeUpdate(doThisSql2);
         System.out.println("added additional columns");
 
         Statement s3 = conn.createStatement();
-        String doThisSql3 = "UPDATE bulkImport ";
+        String doThisSql3 = "UPDATE busNames ";
         doThisSql3 += "SET REG_CODE = 1 "; 
         doThisSql3 += "WHERE BN_STATUS LIKE 'Deregistered'";
         s3.executeUpdate(doThisSql3);
 
         Statement s4 = conn.createStatement();
-        String doThisSql4 = "UPDATE bulkImport ";
+        String doThisSql4 = "UPDATE busNames ";
         doThisSql4 += "SET REG_CODE = 2 "; 
         doThisSql4 += "WHERE BN_STATUS LIKE 'Registered'";
         s3.executeUpdate(doThisSql4);
@@ -149,7 +140,7 @@ public class Derby_Implementation{
         
         for (int i = 0; i < 9; i++){
 
-            doThisSql5[i] = "UPDATE bulkImport ";
+            doThisSql5[i] = "UPDATE busNames ";
             doThisSql5[i] += "SET STATE_CODE = " + i + " "; 
             doThisSql5[i] += "WHERE BN_STATE_OF_REG LIKE '%" + states[i] + "%'";
             conn.createStatement().executeUpdate(doThisSql5[i]);
@@ -158,13 +149,13 @@ public class Derby_Implementation{
         System.out.println("Updated State Code");
 
         Statement s6 = conn.createStatement();
-        String doThisSql6 = "ALTER TABLE bulkImport ";
+        String doThisSql6 = "ALTER TABLE busNames ";
         doThisSql6 += "DROP BN_STATUS"; 
         s6.executeUpdate(doThisSql6);
 
 
         Statement s7 = conn.createStatement();
-        String doThisSql7 = "ALTER TABLE bulkImport ";
+        String doThisSql7 = "ALTER TABLE busNames ";
         doThisSql7 += "DROP BN_STATE_OF_REG"; 
         s7.executeUpdate(doThisSql7);
 
@@ -195,7 +186,7 @@ public class Derby_Implementation{
                     continue;
             }
             
-            String doThisSql = "INSERT INTO bulkImport (BN_NAME, BN_STATUS, BN_REG_DT, BN_CANCEL_DT, BN_RENEW_DT, BN_STATE_NUM, BN_STATE_OF_REG, BN_ABN) ";
+            String doThisSql = "INSERT INTO busNames (BN_NAME, BN_STATUS, BN_REG_DT, BN_CANCEL_DT, BN_RENEW_DT, BN_STATE_NUM, BN_STATE_OF_REG, BN_ABN) ";
             doThisSql += "VALUES (?,?,?,?,?,?,?,?)";
 
 	
@@ -238,7 +229,7 @@ public class Derby_Implementation{
 
     public void readData(Connection conn) throws SQLException {
 		try (Statement query = conn.createStatement()) {
-			String sql = "SELECT * FROM bulkImport FETCH FIRST 10 ROWS ONLY";
+			String sql = "SELECT * FROM busNames FETCH FIRST 10 ROWS ONLY";
 			//query.setFetchSize(100);
 			
 			try (ResultSet rs = query.executeQuery(sql)) {
